@@ -19,6 +19,7 @@ function extractStats(imdbPageStr) {
 }
 
 chrome.runtime.onMessage.addListener(async(request, sender, sendResponse) => {
+  const element = request.element;
   getPage(`http://www.google.com/search?q=${request.payload.split(' ').join('+')}`, (resp) => {
     const link = resp.match(/https:\/\/www\.imdb\.com\/title\/tt([0-9]+)/)[0];
     getPage(link, (resp) => {
@@ -27,7 +28,7 @@ chrome.runtime.onMessage.addListener(async(request, sender, sendResponse) => {
         tabs.forEach((tab) => {
           if (tab.id === sender.tab.id) {
             chrome.tabs.sendMessage(sender.tab.id, {
-              payload: { rating, votes }
+              payload: { rating, votes, element }
             });
           };
         });
