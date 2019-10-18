@@ -8,16 +8,29 @@ function getPage(url, cb) {
   xhr.send();
 }
 
+function extractStats(imdbPageStr) {
+  let rating = imdbPageStr
+    .match(/"ratingValue": "[0-9]\.[0-9]"/)[0]
+    .match(/[0-9]\.[0-9]/)[0];
+  const votes = imdbPageStr
+    .match(/"ratingCount": [0-9]*/)[0].split(' ')[1];
+    // .match(/[0-9]/);
+  return { rating, votes };
+}
+
 chrome.runtime.onMessage.addListener(async(request, sender, sendResponse) => {
-  const resp = getPage(`http://www.google.com/search?q=${request.payload.split(' ').join('+')}`, (resp) => {
-    chrome.tabs.getAllInWindow((tabs) => {
-      tabs.forEach((tab) => {
-        if (tab.id === sender.tab.id) {
-          const link = resp.match(/https:\/\/www\.imdb\.com\/title\/tt([0-9]+)/)[0];
-          chrome.tabs.sendMessage(sender.tab.id, {
-            payload: link
-          });
-        };
+  getPage(`http://www.google.com/search?q=${request.payload.split(' ').join('+')}`, (resp) => {
+    const link = resp.match(/https:\/\/www\.imdb\.com\/title\/tt([0-9]+)/)[0];
+    getPage(link, (resp) => {
+      const { rating, votes } = extractStats(resp); 
+      chrome.tabs.getAllInWindow((tabs) => {
+        tabs.forEach((tab) => {
+          if (tab.id === sender.tab.id) {
+            chrome.tabs.sendMessage(sender.tab.id, {
+              payload: { rating, votes }
+            });
+          };
+        });
       });
     });
   });
