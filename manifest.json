@@ -1,0 +1,22 @@
+{
+  "name": "Netflix imdb extension",
+  "version": "1.0",
+  "description": "Build an Extension!",
+  "permissions": [
+    "activeTab", 
+    "declarativeContent", 
+    "storage",
+    "*://www.google.com/*"
+  ],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "manifest_version": 2
+}
