@@ -8,27 +8,24 @@ function getPage(url, cb) {
   xhr.send();
 }
 
-function extractStats(imdbPageStr) {
-  let rating = imdbPageStr
-    .match(/"ratingValue": "[0-9]\.[0-9]"/)[0]
-    .match(/[0-9]\.[0-9]/)[0];
-  const votes = imdbPageStr
-    .match(/"ratingCount": [0-9]*/)[0].split(' ')[1];
-    // .match(/[0-9]/);
-  return { rating, votes };
+function extractRating(imdbPageStr) {
+  let rating = imdbPageStr.match(/"ratingValue": "[0-9]\.[0-9]"/)
+  if (rating) {
+    return rating[0].match(/[0-9]\.[0-9]/)[0];
+  } else return '?';
 }
 
 chrome.runtime.onMessage.addListener(async(request, sender, sendResponse) => {
-  const element = request.element;
   getPage(`http://www.google.com/search?q=${request.payload.split(' ').join('+')}`, (resp) => {
     const link = resp.match(/https:\/\/www\.imdb\.com\/title\/tt([0-9]+)/)[0];
     getPage(link, (resp) => {
-      const { rating, votes } = extractStats(resp); 
+      const rating = extractRating(resp); 
       chrome.tabs.getAllInWindow((tabs) => {
         tabs.forEach((tab) => {
           if (tab.id === sender.tab.id) {
             chrome.tabs.sendMessage(sender.tab.id, {
-              payload: { rating, votes, element }
+              payload: rating,
+              id: request.id
             });
           };
         });
